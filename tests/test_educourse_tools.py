@@ -19,6 +19,24 @@ def test_search_courses_allows_omitting_schedule():
     assert [course["course_id"] for course in result["matches"]] == ["PY101"]
 
 
+def test_search_courses_lists_catalog_without_filters():
+    result = search_courses()
+
+    assert [course["course_id"] for course in result["matches"]] == [
+        "PY101",
+        "PY201",
+        "WEB101",
+        "DS101",
+        "AI101",
+    ]
+
+
+def test_search_courses_lists_catalog_with_all_filters():
+    result = search_courses(topic="all", level="all", schedule="all")
+
+    assert len(result["matches"]) == 5
+
+
 def test_check_class_slots_reports_full_course():
     assert check_class_slots("WEB101") == {
         "course_id": "WEB101",

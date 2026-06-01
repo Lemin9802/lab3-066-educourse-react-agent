@@ -1,0 +1,205 @@
+[
+  {
+    "id": "simple_001",
+    "target": "agent_v1",
+    "query": "Trung tâm có những khóa học nào?",
+    "expected": "List available courses from the fake course catalog.",
+    "expected_tools": [
+      "search_courses"
+    ],
+    "answer": "Trung tâm có những khóa học sau:\n\n1. **Python Beginner (PY101)**\n   - Chương trình: Python\n   - Cấp độ: Sơ cấp\n   - Lịch học: Buổi tối\n   - Học phí: 1,500,000 VND\n   - Số chỗ còn lại: 5\n\n2. **Python Data Analysis (PY201)**\n   - Chương trình: Python\n   - Cấp độ: Trung cấp\n   - Lịch học: Cuối tuần\n   - Học phí: 2,200,000 VND\n   - Số chỗ còn lại: 2\n\n3. **Data Science Foundation (DS101)**\n   - Chương trình: Khoa học Dữ liệu\n   - Cấp độ: Sơ cấp\n   - Lịch học: Cuối tuần\n   - Học phí: 2,500,000 VND\n   - Số chỗ còn lại: 3\n\n4. **AI for Beginners (AI101)**\n   - Chương trình: AI\n   - Cấp độ: Sơ cấp\n   - Lịch học: Buổi tối\n   - Học phí: 1,800,000 VND\n   - Số chỗ còn lại: 4\n\nLưu ý: Khóa học Web Development Beginner (WEB101) hiện đã hết chỗ.",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": true,
+      "passed_checks": [
+        "mentions_courses"
+      ],
+      "failed_checks": [],
+      "needs_human_review": false
+    },
+    "metrics": {
+      "latency_ms": 8841,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": 2,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "course_001",
+    "target": "agent_v1",
+    "query": "Em muốn học Python beginner buổi tối, dùng mã STUDENT10. Học phí cuối cùng là bao nhiêu?",
+    "expected": "Find PY101, check available slots, validate STUDENT10, and calculate final tuition.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots",
+      "get_coupon",
+      "calculate_tuition"
+    ],
+    "answer": "Bạn có thể học khóa \"Python Beginner\" buổi tối với học phí gốc là 1.500.000 VND. Sau khi áp dụng mã giảm giá STUDENT10, bạn sẽ được giảm 150.000 VND, do đó học phí cuối cùng là 1.350.000 VND.",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": true,
+      "passed_checks": [
+        "mentions_python_beginner",
+        "mentions_discount",
+        "mentions_final_tuition"
+      ],
+      "failed_checks": [],
+      "needs_human_review": false
+    },
+    "metrics": {
+      "latency_ms": 7214,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": 4,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "course_002",
+    "target": "agent_v1",
+    "query": "Em muốn học Web beginner buổi tối. Có lớp nào còn chỗ không?",
+    "expected": "Detect WEB101 matches the request but has zero available slots.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots"
+    ],
+    "answer": "Hi! Hiện tại, không có lớp Web beginner nào còn chỗ, bao gồm cả lớp \"Web Development Beginner\". Nếu bạn muốn học ở một chủ đề khác hoặc có thời gian khác, hãy cho mình biết nhé!",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": true,
+      "passed_checks": [
+        "mentions_web_course",
+        "states_no_slots"
+      ],
+      "failed_checks": [],
+      "needs_human_review": false
+    },
+    "metrics": {
+      "latency_ms": 7007,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": 3,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "course_003",
+    "target": "agent_v1",
+    "query": "Em muốn học Data Science beginner cuối tuần, ngân sách 2.000.000 VND. Có phù hợp không?",
+    "expected": "Find DS101 but detect its tuition exceeds the 2,000,000 VND budget.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots"
+    ],
+    "answer": "Cảm ơn bạn đã quan tâm! Khóa học \"Data Science Foundation\" dành cho người mới bắt đầu có lịch học vào cuối tuần với học phí là 2.500.000 VND. Tuy nhiên, học phí này cao hơn ngân sách của bạn là 2.000.000 VND. Vì vậy, khóa học này không phù hợp với bạn.",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": true,
+      "passed_checks": [
+        "mentions_data_science",
+        "mentions_tuition",
+        "mentions_over_budget"
+      ],
+      "failed_checks": [],
+      "needs_human_review": false
+    },
+    "metrics": {
+      "latency_ms": 8994,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": 3,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "course_004",
+    "target": "agent_v1",
+    "query": "Em muốn học AI beginner buổi tối, dùng mã EARLYBIRD. Tính học phí sau giảm.",
+    "expected": "Find AI101, check slots, apply EARLYBIRD, and calculate tuition after 15 percent discount.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots",
+      "get_coupon",
+      "calculate_tuition"
+    ],
+    "answer": "You can enroll in the \"AI for Beginners\" course, which has available slots in the evening. The original tuition is 1,800,000 VND, and with the valid coupon \"EARLYBIRD\" providing a 15% discount, the final tuition will be 1,530,000 VND.",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": true,
+      "passed_checks": [
+        "mentions_ai_course",
+        "mentions_discount",
+        "mentions_final_tuition"
+      ],
+      "failed_checks": [],
+      "needs_human_review": false
+    },
+    "metrics": {
+      "latency_ms": 10597,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": 4,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "failure_001",
+    "target": "agent_v1",
+    "query": "Em muốn học Python nâng cao nhưng dùng mã FAKECODE. Có giảm giá không?",
+    "expected": "Handle an unavailable advanced Python course request and an invalid coupon code.",
+    "expected_tools": [
+      "search_courses",
+      "get_coupon"
+    ],
+    "answer": "Hi! Currently, there are no advanced Python courses available for registration. Additionally, the coupon code \"FAKECODE\" is invalid, so no discount can be applied. If you need help finding other courses or have any other questions, feel free to ask!",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": true,
+      "passed_checks": [
+        "rejects_fake_coupon",
+        "does_not_fake_discount"
+      ],
+      "failed_checks": [],
+      "needs_human_review": false
+    },
+    "metrics": {
+      "latency_ms": 7527,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": 3,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  }
+]

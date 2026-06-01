@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -16,9 +17,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from evaluation.test_cases import get_test_cases
 from src.chatbot.chatbot_baseline import ChatbotBaseline
-from src.core.gemini_provider import GeminiProvider
 from src.core.llm_provider import LLMProvider
-from src.core.openai_provider import OpenAIProvider
 
 
 RESULTS_DIR = ROOT_DIR / "evaluation" / "results"
@@ -26,12 +25,16 @@ RESULTS_DIR = ROOT_DIR / "evaluation" / "results"
 
 def build_provider(provider: str, model: Optional[str] = None) -> LLMProvider:
     if provider == "openai":
+        from src.core.openai_provider import OpenAIProvider
+
         return OpenAIProvider(
-            model_name=model or os.getenv("DEFAULT_MODEL", "gpt-4o"),
+            model_name=model or os.getenv("DEFAULT_MODEL", "gpt-4o-mini"),
             api_key=os.getenv("OPENAI_API_KEY"),
         )
 
     if provider in {"gemini", "google"}:
+        from src.core.gemini_provider import GeminiProvider
+
         return GeminiProvider(
             model_name=model or os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),
             api_key=os.getenv("GEMINI_API_KEY"),
@@ -63,18 +66,39 @@ def build_agent(agent_version: str, llm: LLMProvider):
 
 
 def normalize_text(text: str) -> str:
-    return re.sub(r"\s+", " ", text.lower()).strip()
+    text = text.lower().replace("đ", "d")
+    text = unicodedata.normalize("NFD", text)
+    text = "".join(
+        character
+        for character in text
+        if unicodedata.category(character) != "Mn"
+    )
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def contains_any(text: str, terms: List[str]) -> bool:
     normalized = normalize_text(text)
-    return any(term.lower() in normalized for term in terms)
+    return any(normalize_text(term) in normalized for term in terms)
+
+
+def states_no_slots(text: str) -> bool:
+    normalized = normalize_text(text)
+    return (
+        contains_any(text, ["het cho", "khong con cho", "0", "zero"])
+        or ("khong co" in normalized and "con cho" in normalized)
+    )
 
 
 def evaluate_answer(case_id: str, answer: str) -> Dict[str, Any]:
     checks = {
         "simple_001": [
-            ("mentions_courses", contains_any(answer, ["python", "web", "data science", "ai"])),
+            (
+                "mentions_courses",
+                contains_any(
+                    answer,
+                    ["python", "web", "data science", "ai101", "ai for beginners"],
+                ),
+            ),
         ],
         "course_001": [
             ("mentions_python_beginner", contains_any(answer, ["py101", "python beginner"])),
@@ -83,7 +107,7 @@ def evaluate_answer(case_id: str, answer: str) -> Dict[str, Any]:
         ],
         "course_002": [
             ("mentions_web_course", contains_any(answer, ["web101", "web development", "web beginner"])),
-            ("states_no_slots", contains_any(answer, ["hết chỗ", "không còn chỗ", "0", "zero"])),
+            ("states_no_slots", states_no_slots(answer)),
         ],
         "course_003": [
             ("mentions_data_science", contains_any(answer, ["ds101", "data science"])),
@@ -191,6 +215,13 @@ def run_agent_case(case: Dict[str, Any], llm: LLMProvider, agent_version: str) -
         status = "error"
         error = str(exc)
     elapsed_ms = int((time.time() - start) * 1000)
+    history = getattr(agent, "history", [])
+    usage_rows = [item.get("usage") or {} for item in history]
+
+    def total_usage(metric_name: str) -> Optional[int]:
+        values = [usage.get(metric_name) for usage in usage_rows]
+        clean_values = [value for value in values if value is not None]
+        return sum(clean_values) if clean_values else None
 
     return {
         "id": case["id"],
@@ -204,10 +235,10 @@ def run_agent_case(case: Dict[str, Any], llm: LLMProvider, agent_version: str) -
         "correctness": evaluate_answer(case["id"], answer),
         "metrics": {
             "latency_ms": elapsed_ms,
-            "prompt_tokens": None,
-            "completion_tokens": None,
-            "total_tokens": None,
-            "steps": len(getattr(agent, "history", [])) or None,
+            "prompt_tokens": total_usage("prompt_tokens"),
+            "completion_tokens": total_usage("completion_tokens"),
+            "total_tokens": total_usage("total_tokens"),
+            "steps": len(history) or None,
             "parser_errors": None,
             "hallucinated_tool_errors": None,
             "timeouts": None,

@@ -1,0 +1,406 @@
+[
+  {
+    "id": "simple_001",
+    "target": "chatbot",
+    "query": "Trung tâm có những khóa học nào?",
+    "expected": "List available courses from the fake course catalog.",
+    "expected_tools": [
+      "search_courses"
+    ],
+    "answer": "Trung tâm thường cung cấp nhiều loại khóa học như tiếng Anh, tin học, kỹ năng mềm, lập trình, quản lý dự án, và nhiều lĩnh vực khác. Để biết chính xác những khóa học có sẵn, bạn nên liên hệ trực tiếp với trung tâm hoặc truy cập trang web của họ để xem thông tin chi tiết.",
+    "status": "completed",
+    "correctness": {
+      "passed": true,
+      "passed_checks": [
+        "mentions_courses"
+      ],
+      "failed_checks": [],
+      "needs_human_review": false
+    },
+    "metrics": {
+      "latency_ms": 2872,
+      "prompt_tokens": 64,
+      "completion_tokens": 70,
+      "total_tokens": 134,
+      "steps": 0,
+      "parser_errors": 0,
+      "hallucinated_tool_errors": 0,
+      "timeouts": 0,
+      "tool_errors": 0
+    }
+  },
+  {
+    "id": "course_001",
+    "target": "chatbot",
+    "query": "Em muốn học Python beginner buổi tối, dùng mã STUDENT10. Học phí cuối cùng là bao nhiêu?",
+    "expected": "Find PY101, check available slots, validate STUDENT10, and calculate final tuition.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots",
+      "get_coupon",
+      "calculate_tuition"
+    ],
+    "answer": "Xin lỗi, mình không thể cung cấp thông tin cụ thể về học phí hay mã giảm giá cho khóa học. Tuy nhiên, bạn có thể kiểm tra trực tiếp trên trang web của trung tâm hoặc nền tảng học trực tuyến mà bạn quan tâm để biết thông tin chi tiết về học phí và các ưu đãi hiện có.",
+    "status": "completed",
+    "correctness": {
+      "passed": false,
+      "passed_checks": [],
+      "failed_checks": [
+        "mentions_python_beginner",
+        "mentions_discount",
+        "mentions_final_tuition"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 1729,
+      "prompt_tokens": 80,
+      "completion_tokens": 67,
+      "total_tokens": 147,
+      "steps": 0,
+      "parser_errors": 0,
+      "hallucinated_tool_errors": 0,
+      "timeouts": 0,
+      "tool_errors": 0
+    }
+  },
+  {
+    "id": "course_002",
+    "target": "chatbot",
+    "query": "Em muốn học Web beginner buổi tối. Có lớp nào còn chỗ không?",
+    "expected": "Detect WEB101 matches the request but has zero available slots.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots"
+    ],
+    "answer": "Em có thể tìm kiếm các lớp học Web dành cho người mới bắt đầu vào buổi tối tại các trung tâm đào tạo, trường học hoặc trên các nền tảng học trực tuyến. Hãy kiểm tra thông tin chi tiết trên trang web của họ để biết thêm về lịch học và tình trạng còn chỗ!",
+    "status": "completed",
+    "correctness": {
+      "passed": false,
+      "passed_checks": [],
+      "failed_checks": [
+        "mentions_web_course",
+        "states_no_slots"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 1347,
+      "prompt_tokens": 72,
+      "completion_tokens": 64,
+      "total_tokens": 136,
+      "steps": 0,
+      "parser_errors": 0,
+      "hallucinated_tool_errors": 0,
+      "timeouts": 0,
+      "tool_errors": 0
+    }
+  },
+  {
+    "id": "course_003",
+    "target": "chatbot",
+    "query": "Em muốn học Data Science beginner cuối tuần, ngân sách 2.000.000 VND. Có phù hợp không?",
+    "expected": "Find DS101 but detect its tuition exceeds the 2,000,000 VND budget.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots"
+    ],
+    "answer": "Với ngân sách 2.000.000 VND, em có thể tìm thấy một số khóa học Data Science dành cho người mới bắt đầu vào cuối tuần. Tuy nhiên, mức độ phù hợp còn tùy thuộc vào nội dung khóa học và địa điểm tổ chức. Em nên tìm hiểu kỹ về thông tin khóa học và các chương trình khuyến mãi trước khi đăng ký.",
+    "status": "completed",
+    "correctness": {
+      "passed": false,
+      "passed_checks": [
+        "mentions_data_science"
+      ],
+      "failed_checks": [
+        "mentions_tuition",
+        "mentions_over_budget"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 2570,
+      "prompt_tokens": 80,
+      "completion_tokens": 79,
+      "total_tokens": 159,
+      "steps": 0,
+      "parser_errors": 0,
+      "hallucinated_tool_errors": 0,
+      "timeouts": 0,
+      "tool_errors": 0
+    }
+  },
+  {
+    "id": "course_004",
+    "target": "chatbot",
+    "query": "Em muốn học AI beginner buổi tối, dùng mã EARLYBIRD. Tính học phí sau giảm.",
+    "expected": "Find AI101, check slots, apply EARLYBIRD, and calculate tuition after 15 percent discount.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots",
+      "get_coupon",
+      "calculate_tuition"
+    ],
+    "answer": "Em cần cung cấp thông tin về học phí gốc mà em muốn biết giảm giá với mã EARLYBIRD. Sau đó, em chỉ cần trừ đi số tiền giảm từ mã đó để tính học phí sau giảm.",
+    "status": "completed",
+    "correctness": {
+      "passed": false,
+      "passed_checks": [
+        "mentions_discount"
+      ],
+      "failed_checks": [
+        "mentions_ai_course",
+        "mentions_final_tuition"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 1186,
+      "prompt_tokens": 78,
+      "completion_tokens": 46,
+      "total_tokens": 124,
+      "steps": 0,
+      "parser_errors": 0,
+      "hallucinated_tool_errors": 0,
+      "timeouts": 0,
+      "tool_errors": 0
+    }
+  },
+  {
+    "id": "failure_001",
+    "target": "chatbot",
+    "query": "Em muốn học Python nâng cao nhưng dùng mã FAKECODE. Có giảm giá không?",
+    "expected": "Handle an unavailable advanced Python course request and an invalid coupon code.",
+    "expected_tools": [
+      "search_courses",
+      "get_coupon"
+    ],
+    "answer": "Xin lỗi, nhưng mình không thể xác nhận thông tin về mã giảm giá hay chương trình khuyến mãi cho khóa học Python nâng cao. Bạn nên kiểm tra trực tiếp trên trang web của khóa học để biết thêm chi tiết.",
+    "status": "completed",
+    "correctness": {
+      "passed": false,
+      "passed_checks": [
+        "does_not_fake_discount"
+      ],
+      "failed_checks": [
+        "rejects_fake_coupon"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 1520,
+      "prompt_tokens": 73,
+      "completion_tokens": 47,
+      "total_tokens": 120,
+      "steps": 0,
+      "parser_errors": 0,
+      "hallucinated_tool_errors": 0,
+      "timeouts": 0,
+      "tool_errors": 0
+    }
+  },
+  {
+    "id": "simple_001",
+    "target": "agent_v1",
+    "query": "Trung tâm có những khóa học nào?",
+    "expected": "List available courses from the fake course catalog.",
+    "expected_tools": [
+      "search_courses"
+    ],
+    "answer": "Not implemented. Fill in the TODOs!",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": false,
+      "passed_checks": [],
+      "failed_checks": [
+        "mentions_courses"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 5,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": null,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "course_001",
+    "target": "agent_v1",
+    "query": "Em muốn học Python beginner buổi tối, dùng mã STUDENT10. Học phí cuối cùng là bao nhiêu?",
+    "expected": "Find PY101, check available slots, validate STUDENT10, and calculate final tuition.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots",
+      "get_coupon",
+      "calculate_tuition"
+    ],
+    "answer": "Not implemented. Fill in the TODOs!",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": false,
+      "passed_checks": [],
+      "failed_checks": [
+        "mentions_python_beginner",
+        "mentions_discount",
+        "mentions_final_tuition"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": null,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "course_002",
+    "target": "agent_v1",
+    "query": "Em muốn học Web beginner buổi tối. Có lớp nào còn chỗ không?",
+    "expected": "Detect WEB101 matches the request but has zero available slots.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots"
+    ],
+    "answer": "Not implemented. Fill in the TODOs!",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": false,
+      "passed_checks": [],
+      "failed_checks": [
+        "mentions_web_course",
+        "states_no_slots"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 1,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": null,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "course_003",
+    "target": "agent_v1",
+    "query": "Em muốn học Data Science beginner cuối tuần, ngân sách 2.000.000 VND. Có phù hợp không?",
+    "expected": "Find DS101 but detect its tuition exceeds the 2,000,000 VND budget.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots"
+    ],
+    "answer": "Not implemented. Fill in the TODOs!",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": false,
+      "passed_checks": [],
+      "failed_checks": [
+        "mentions_data_science",
+        "mentions_tuition",
+        "mentions_over_budget"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 1,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": null,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "course_004",
+    "target": "agent_v1",
+    "query": "Em muốn học AI beginner buổi tối, dùng mã EARLYBIRD. Tính học phí sau giảm.",
+    "expected": "Find AI101, check slots, apply EARLYBIRD, and calculate tuition after 15 percent discount.",
+    "expected_tools": [
+      "search_courses",
+      "check_class_slots",
+      "get_coupon",
+      "calculate_tuition"
+    ],
+    "answer": "Not implemented. Fill in the TODOs!",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": false,
+      "passed_checks": [],
+      "failed_checks": [
+        "mentions_ai_course",
+        "mentions_discount",
+        "mentions_final_tuition"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 1,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": null,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  },
+  {
+    "id": "failure_001",
+    "target": "agent_v1",
+    "query": "Em muốn học Python nâng cao nhưng dùng mã FAKECODE. Có giảm giá không?",
+    "expected": "Handle an unavailable advanced Python course request and an invalid coupon code.",
+    "expected_tools": [
+      "search_courses",
+      "get_coupon"
+    ],
+    "answer": "Not implemented. Fill in the TODOs!",
+    "status": "completed",
+    "error": null,
+    "correctness": {
+      "passed": false,
+      "passed_checks": [
+        "does_not_fake_discount"
+      ],
+      "failed_checks": [
+        "rejects_fake_coupon"
+      ],
+      "needs_human_review": true
+    },
+    "metrics": {
+      "latency_ms": 0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "steps": null,
+      "parser_errors": null,
+      "hallucinated_tool_errors": null,
+      "timeouts": null,
+      "tool_errors": null
+    }
+  }
+]

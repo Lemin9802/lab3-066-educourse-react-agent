@@ -57,7 +57,9 @@ def _course_result(course_id: str, course: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def search_courses(
-    topic: str, level: str, schedule: Optional[str] = None
+    topic: Optional[str] = None,
+    level: Optional[str] = None,
+    schedule: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Find courses matching a topic, level, and optional schedule.
@@ -65,9 +67,9 @@ def search_courses(
     matches: List[Dict[str, Any]] = []
     for course_id, course in COURSES.items():
         if (
-            course["topic"] == topic
-            and course["level"] == level
-            and (schedule is None or course["schedule"] == schedule)
+            (topic in {None, "all"} or course["topic"] == topic)
+            and (level in {None, "all"} or course["level"] == level)
+            and (schedule in {None, "all"} or course["schedule"] == schedule)
         ):
             matches.append(_course_result(course_id, course))
 
@@ -150,10 +152,11 @@ TOOLS: List[Dict[str, Any]] = [
     {
         "name": "search_courses",
         "description": (
-            "Find courses by topic and level, with an optional schedule. "
-            "Arguments: topic (string), level (string), schedule (optional string, "
-            "such as 'evening' or 'weekend'). Returns a dictionary containing a "
-            "matches list."
+            "Find courses using optional topic, level, and schedule filters. "
+            "Arguments: topic (optional string), level (optional string), schedule "
+            "(optional string, such as 'evening' or 'weekend'). Omit filters or use "
+            "'all' for filters to list the catalog. Returns a dictionary containing "
+            "a matches list."
         ),
         "function": search_courses,
     },
