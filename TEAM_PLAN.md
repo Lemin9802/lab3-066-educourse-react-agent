@@ -16,9 +16,21 @@ The agent can help users:
 * Check whether a class still has available slots.
 * Validate discount coupon codes.
 * Calculate the final tuition after discount.
-* Compare a normal chatbot baseline with a ReAct Agent.
+* Compare a normal chatbot baseline with a ReAct Agent v1.
 
 The goal is not to build a full education platform. The goal is to demonstrate how a ReAct Agent performs better than a normal chatbot on multi-step tasks that require tool use and environment feedback.
+
+### Main Team Scope
+
+The required team scope is to build and evaluate **Agent v1**.
+
+Agent v1 should be able to:
+
+```text
+Thought -> Action -> Observation -> Thought -> Action -> Observation -> Final Answer
+```
+
+Agent v2 or any further improvement is optional. Each member may add small improvements if they have time, but the main team deliverable is Agent v1.
 
 ### Example User Query
 
@@ -115,10 +127,24 @@ The assistant will support:
 - Class slot checking
 - Coupon validation
 - Final tuition calculation
-- Chatbot vs ReAct Agent comparison
-- Agent v1 vs Agent v2 improvement
+- Chatbot vs ReAct Agent v1 comparison
 - OpenAI/Gemini provider switching
 - Logs and metrics analysis
+- Failure analysis for Agent v1
+```
+
+### Optional Scope
+
+The following items are optional and can be done by individual members if time allows:
+
+```text
+- Agent v2 improvements
+- Retry logic
+- Better parser guardrails
+- Better prompt format
+- More test cases
+- More detailed metrics
+- Prompt ablation experiments
 ```
 
 ### Out of Scope
@@ -356,7 +382,7 @@ Owner: Nhi
 Purpose:
 
 ```text
-- Implement ReAct Agent loop.
+- Implement ReAct Agent v1 loop.
 - Implement Action parser.
 - Implement tool execution.
 - Add provider switching for OpenAI and Gemini.
@@ -487,6 +513,7 @@ models/
 __pycache__/
 *.log
 .DS_Store
+.venv/
 ```
 
 The `.env` file is local only.
@@ -538,7 +565,7 @@ feat/lead-react-provider-switching
 ### Main Responsibilities
 
 ```text
-1. Implement ReActAgent.run().
+1. Implement ReActAgent.run() for Agent v1.
 2. Implement Final Answer detection.
 3. Implement Action parser.
 4. Implement dynamic tool execution.
@@ -572,6 +599,15 @@ python run_agent.py --provider gemini
 ```
 
 Both commands should run successfully and return a Final Answer.
+
+Optional improvement if time allows:
+
+```text
+- Improve parser robustness.
+- Add retry logic.
+- Add clearer error messages.
+- Add prompt v2 experiment.
+```
 
 ---
 
@@ -614,6 +650,14 @@ src/tools/educourse_tools.py
 - At least four tools are implemented.
 ```
 
+Optional improvement if time allows:
+
+```text
+- Add schedule filtering.
+- Add budget checking helper.
+- Add better error output for unknown course_id or invalid coupon.
+```
+
 ---
 
 ## Member 3 Tasks
@@ -633,7 +677,7 @@ feat/evaluation-baseline
 2. Create test cases.
 3. Create evaluation runner.
 4. Create log analyzer.
-5. Compare Chatbot vs Agent v1 vs Agent v2.
+5. Compare Chatbot vs Agent v1.
 6. Summarize success rate, latency, token count, loop count, and failure types.
 ```
 
@@ -653,6 +697,14 @@ evaluation/analyze_logs.py
 - Evaluation script can run multiple cases.
 - Results can be converted into a report table.
 - At least one successful trace and one failed trace are documented.
+```
+
+Optional improvement if time allows:
+
+```text
+- Add Agent v1 vs optional improved version comparison.
+- Add more test cases.
+- Add CSV or Markdown output for evaluation results.
 ```
 
 ---
@@ -698,11 +750,11 @@ TEST_CASES = [
 
 ---
 
-## 12. Agent v1 and Agent v2 Plan
+## 12. Agent v1 and Optional Improvements Plan
 
 ### Agent v1
 
-Agent v1 only needs to run the basic ReAct loop.
+Agent v1 is the required team deliverable.
 
 Expected capabilities:
 
@@ -710,7 +762,9 @@ Expected capabilities:
 - Call tools.
 - Parse Action.
 - Return Observation.
+- Feed Observation back into the next prompt.
 - Produce Final Answer.
+- Stop after max_steps if no Final Answer is produced.
 ```
 
 Possible Agent v1 issues:
@@ -723,11 +777,11 @@ Possible Agent v1 issues:
 - Ignores invalid coupon result.
 ```
 
-### Agent v2
+### Optional Improvements
 
-Agent v2 improves based on failure traces.
+Further improvements are optional and can be done by any member if time allows.
 
-Planned improvements:
+Possible optional improvements:
 
 ```text
 - Add stricter system prompt.
@@ -737,9 +791,10 @@ Planned improvements:
 - Add better tool error messages.
 - Add max_steps fallback.
 - Add clearer tool descriptions.
+- Add a small Agent v1 vs improved-agent comparison.
 ```
 
-### Example Failure Case
+### Example Failure Case for Report
 
 Input:
 
@@ -747,7 +802,7 @@ Input:
 Em muốn học Web beginner buổi tối. Có lớp nào còn chỗ không?
 ```
 
-Agent v1 issue:
+Possible Agent v1 issue:
 
 ```text
 Agent recommends WEB101 even though slots_left = 0.
@@ -759,7 +814,7 @@ Root cause:
 Agent did not check class availability before recommending the course.
 ```
 
-Agent v2 fix:
+Possible optional fix:
 
 ```text
 System prompt updated:
@@ -767,7 +822,7 @@ Before recommending any course, always call check_class_slots.
 If slots_left is 0, do not recommend the course as available.
 ```
 
-Expected Agent v2 answer:
+Expected improved answer:
 
 ```text
 Lớp Web Development Beginner hiện đã hết chỗ. Bạn chưa thể đăng ký lớp này.
@@ -843,10 +898,10 @@ AGENT_END
 The report should include:
 
 ```text
-1. One successful trace.
-2. One failed trace.
+1. One successful trace from Agent v1.
+2. One failed trace or limitation from Agent v1.
 3. Root Cause Analysis.
-4. Agent v1 vs Agent v2 comparison.
+4. Optional improvement discussion if any member implements it.
 ```
 
 ---
@@ -856,7 +911,7 @@ The report should include:
 ### Code
 
 ```text
-- ReAct Agent implementation
+- ReAct Agent v1 implementation
 - EduCourse tools
 - Chatbot baseline
 - Evaluation scripts
@@ -883,9 +938,10 @@ The report must include:
 - Tool inventory
 - ReAct flowchart
 - Successful trace
-- Failed trace
+- Failed trace or limitation trace
 - Metrics table
-- Agent v1 vs Agent v2 comparison
+- Chatbot vs Agent v1 comparison
+- Optional improvements if implemented
 - Future improvements
 ```
 
@@ -918,15 +974,15 @@ The final report should include:
 ## Branches
 
 ```text
-[ ] Lead branch created.
-[ ] Member 2 branch created.
-[ ] Member 3 branch created.
+[ ] Nhi branch created.
+[ ] Huy branch created.
+[ ] Nghĩa branch created.
 ```
 
-## Lead
+## Nhi
 
 ```text
-[ ] ReActAgent.run() implemented.
+[ ] ReActAgent.run() implemented for Agent v1.
 [ ] Action parser implemented.
 [ ] Tool execution implemented.
 [ ] Provider factory implemented.
@@ -935,9 +991,10 @@ The final report should include:
 [ ] Gemini run tested.
 [ ] Final demo prepared.
 [ ] Lead personal report completed.
+[ ] Optional improvements documented if implemented.
 ```
 
-## Member 2
+## Huy
 
 ```text
 [ ] Course catalog implemented.
@@ -948,9 +1005,10 @@ The final report should include:
 [ ] calculate_tuition implemented.
 [ ] TOOLS list exported.
 [ ] Member 2 personal report completed.
+[ ] Optional improvements documented if implemented.
 ```
 
-## Member 3
+## Nghĩa
 
 ```text
 [ ] Chatbot baseline implemented.
@@ -959,6 +1017,7 @@ The final report should include:
 [ ] Log analyzer implemented.
 [ ] Metrics table prepared.
 [ ] Member 3 personal report completed.
+[ ] Optional improvements documented if implemented.
 ```
 
 ## Final Report
@@ -971,8 +1030,10 @@ The final report should include:
 [ ] Tool inventory included.
 [ ] Flowchart included.
 [ ] Successful trace included.
-[ ] Failed trace included.
+[ ] Failed trace or limitation trace included.
 [ ] Metrics table included.
+[ ] Chatbot vs Agent v1 comparison included.
+[ ] Optional improvements included if implemented.
 [ ] File renamed to Lab3_066_EduCourseAgents.md.
 ```
 
@@ -990,17 +1051,21 @@ Mình đã fork repo mẫu của trường và team mình sẽ làm trên fork n
 Repo nộp bài:
 https://github.com/lemin9802/lab3-066-educourse-react-agent
 
+Scope chính:
+Team mình làm đến Agent v1. Agent v1 cần chạy được vòng Thought -> Action -> Observation -> Final Answer, gọi được tools, có chatbot baseline, logs và evaluation.
+Agent v2 hoặc các improvement sâu hơn là optional, ai có thời gian thì làm thêm và ghi vào personal report.
+
 Workflow:
 - Không commit trực tiếp vào main.
 - Mỗi người làm branch riêng.
 - Code xong thì push branch và tạo Pull Request vào main của repo fork này.
 - Không tạo PR về repo gốc của trường.
-- Không commit .env, API key, logs, models, __pycache__.
+- Không commit .env, API key, logs, models, __pycache__, .venv.
 - Mỗi người phải có ít nhất 1 code commit bằng GitHub account của mình để được personal score.
 
 Branch:
 - Nhi: feat/lead-react-provider-switching
-  Việc: ReAct loop, parser, tool execution, OpenAI/Gemini provider switching, runner, report integration.
+  Việc: ReAct loop v1, parser, tool execution, OpenAI/Gemini provider switching, runner, report integration.
 
 - Huy: feat/educourse-tools
   Việc: course catalog + tools: search_courses, check_class_slots, get_coupon, calculate_tuition.
@@ -1021,11 +1086,13 @@ The project is considered done when:
 ```text
 1. The public fork repository contains the final code.
 2. Each member has at least one code commit.
-3. The ReAct Agent can solve at least one multi-step course registration query.
-4. The chatbot baseline and agent are compared.
-5. Agent v2 improves at least one failure from Agent v1.
-6. Logs and metrics are used in the report.
-7. OpenAI/Gemini provider switching is demonstrated.
-8. The final report includes both group and personal sections.
-9. The final report filename follows the required Lab3_066_EduCourseAgents.md format.
+3. The ReAct Agent v1 can solve at least one multi-step course registration query.
+4. The chatbot baseline and Agent v1 are compared.
+5. Logs and metrics are used in the report.
+6. At least one successful Agent v1 trace is documented.
+7. At least one failed trace or limitation is documented and analyzed.
+8. OpenAI/Gemini provider switching is demonstrated.
+9. The final report includes both group and personal sections.
+10. Optional Agent v2 or improvements are documented only if implemented.
+11. The final report filename follows the required Lab3_066_EduCourseAgents.md format.
 ```
