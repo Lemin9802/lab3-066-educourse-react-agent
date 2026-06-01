@@ -7,9 +7,9 @@ from statistics import mean
 from typing import Any, Dict, Iterable, List, Optional
 
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 LOGS_DIR = ROOT_DIR / "logs"
-RESULTS_DIR = ROOT_DIR / "evaluation" / "results"
+RESULTS_DIR = ROOT_DIR / "tests" / "evaluation" / "results"
 
 
 def load_json_lines(path: Path) -> Iterable[Dict[str, Any]]:

@@ -684,10 +684,10 @@ feat/evaluation-baseline
 ### Files
 
 ```text
-src/chatbot_baseline.py
-evaluation/test_cases.py
-evaluation/run_evaluation.py
-evaluation/analyze_logs.py
+src/chatbot.py
+tests/evaluation/test_cases.py
+tests/evaluation/run_evaluation.py
+tests/evaluation/analyze_logs.py
 ```
 
 ### Done When

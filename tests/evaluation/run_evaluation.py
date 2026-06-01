@@ -11,16 +11,16 @@ from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from evaluation.test_cases import get_test_cases
-from src.chatbot.chatbot_baseline import ChatbotBaseline
+from tests.evaluation.test_cases import get_test_cases
+from src.chatbot import ChatbotBaseline
 from src.core.llm_provider import LLMProvider
 
 
-RESULTS_DIR = ROOT_DIR / "evaluation" / "results"
+RESULTS_DIR = ROOT_DIR / "tests" / "evaluation" / "results"
 
 
 def build_provider(provider: str, model: Optional[str] = None) -> LLMProvider:

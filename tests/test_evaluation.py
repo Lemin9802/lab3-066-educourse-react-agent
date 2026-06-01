@@ -1,4 +1,4 @@
-from evaluation.run_evaluation import evaluate_answer
+from tests.evaluation.run_evaluation import evaluate_answer
 
 
 def test_simple_course_list_does_not_match_vietnamese_substrings():
