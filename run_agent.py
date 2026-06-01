@@ -5,6 +5,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from src.core.provider_factory import create_provider
+from src.agent.agent import ReActAgent
 
 try:
     from src.tools.educourse_tools import TOOLS
@@ -42,6 +43,13 @@ def parse_args():
         help="User query for the agent.",
     )
 
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=6,
+        help="Maximum ReAct reasoning steps.",
+    )
+
     return parser.parse_args()
 
 
@@ -53,29 +61,24 @@ def main():
         model_name=args.model,
     )
 
+    agent = ReActAgent(
+        llm=llm,
+        tools=TOOLS,
+        max_steps=args.max_steps,
+    )
+
     tool_names = [tool["name"] for tool in TOOLS]
 
     print("\n=== RUN CONFIG ===")
     print(f"Provider model: {llm.model_name}")
     print(f"Available tools: {', '.join(tool_names)}")
+    print(f"Max steps: {args.max_steps}")
     print(f"Query: {args.query}")
 
-    result = llm.generate(
-        prompt=(
-            "You are a course registration assistant. "
-            "For now, simply acknowledge the user query in one Vietnamese sentence.\n\n"
-            f"User query: {args.query}"
-        ),
-        system_prompt=(
-            "You are a concise assistant for a course registration demo."
-        ),
-    )
+    answer = agent.run(args.query)
 
-    print("\n=== PROVIDER RESPONSE ===")
-    print("Provider:", result.get("provider"))
-    print("Latency:", result.get("latency_ms"), "ms")
-    print("Usage:", result.get("usage"))
-    print("Content:", result.get("content"))
+    print("\n=== FINAL ANSWER ===")
+    print(answer)
 
 
 if __name__ == "__main__":

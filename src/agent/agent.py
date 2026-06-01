@@ -1,15 +1,17 @@
-import os
+import json
 import re
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
+
 from src.core.llm_provider import LLMProvider
 from src.telemetry.logger import logger
+from src.telemetry.metrics import tracker
+
 
 class ReActAgent:
     """
-    SKELETON: A ReAct-style Agent that follows the Thought-Action-Observation loop.
-    Students should implement the core loop logic and tool execution.
+    A ReAct-style Agent v1 that follows the Thought-Action-Observation loop.
     """
-    
+
     def __init__(self, llm: LLMProvider, tools: List[Dict[str, Any]], max_steps: int = 5):
         self.llm = llm
         self.tools = tools
@@ -17,58 +19,291 @@ class ReActAgent:
         self.history = []
 
     def get_system_prompt(self) -> str:
-        """
-        TODO: Implement the system prompt that instructs the agent to follow ReAct.
-        Should include:
-        1.  Available tools and their descriptions.
-        2.  Format instructions: Thought, Action, Observation.
-        """
-        tool_descriptions = "\n".join([f"- {t['name']}: {t['description']}" for t in self.tools])
-        return f"""
-        You are an intelligent assistant. You have access to the following tools:
-        {tool_descriptions}
+        tool_descriptions = "\n".join(
+            [
+                f"- {tool['name']}: {tool['description']}"
+                for tool in self.tools
+            ]
+        )
 
-        Use the following format:
-        Thought: your line of reasoning.
-        Action: tool_name(arguments)
-        Observation: result of the tool call.
-        ... (repeat Thought/Action/Observation if needed)
-        Final Answer: your final response.
-        """
+        return f"""
+You are EduCourse ReAct Agent v1, a course registration assistant.
+
+You have access to the following tools:
+{tool_descriptions}
+
+You must follow this exact format:
+
+Thought: explain what information you need next.
+Action: tool_name({{"argument_name": "argument_value"}})
+
+After you call an Action, the system will provide:
+Observation: tool result
+
+Then continue with Thought/Action if more tool information is needed.
+
+When you have enough information, stop using tools and respond with:
+Final Answer: your final response to the user.
+
+Rules:
+- Use only the tools listed above.
+- Use exactly one Action per step.
+- Do not invent tool names.
+- Do not invent Observation results.
+- Action arguments must be valid JSON inside parentheses.
+- Before recommending a course as available, check class slots.
+- If slots_left is 0, do not say the class is available.
+- If a coupon is invalid, explain that the coupon is invalid and no discount is applied.
+- Final answers should be clear and use VND when discussing tuition.
+- Do not write Observation yourself. Observation will be provided only by the system after a tool call.
+- Do not include Final Answer in the same response as an Action.
+""".strip()
 
     def run(self, user_input: str) -> str:
-        """
-        TODO: Implement the ReAct loop logic.
-        1. Generate Thought + Action.
-        2. Parse Action and execute Tool.
-        3. Append Observation to prompt and repeat until Final Answer.
-        """
-        logger.log_event("AGENT_START", {"input": user_input, "model": self.llm.model_name})
-        
-        current_prompt = user_input
-        steps = 0
+        logger.log_event(
+            "AGENT_START",
+            {
+                "input": user_input,
+                "model": getattr(self.llm, "model_name", "unknown"),
+                "max_steps": self.max_steps,
+            },
+        )
 
-        while steps < self.max_steps:
-            # TODO: Generate LLM response
-            # result = self.llm.generate(current_prompt, system_prompt=self.get_system_prompt())
-            
-            # TODO: Parse Thought/Action from result
-            
-            # TODO: If Action found -> Call tool -> Append Observation
-            
-            # TODO: If Final Answer found -> Break loop
-            
-            steps += 1
-            
-        logger.log_event("AGENT_END", {"steps": steps})
-        return "Not implemented. Fill in the TODOs!"
+        conversation = f"User: {user_input}\n"
+        final_answer = ""
 
-    def _execute_tool(self, tool_name: str, args: str) -> str:
-        """
-        Helper method to execute tools by name.
-        """
+        for step in range(1, self.max_steps + 1):
+            logger.log_event(
+                "AGENT_STEP_START",
+                {
+                    "step": step,
+                    "prompt_preview": conversation[-1000:],
+                },
+            )
+
+            result = self.llm.generate(
+                conversation,
+                system_prompt=self.get_system_prompt(),
+            )
+
+            content = result.get("content", "").strip()
+
+            tracker.track_request(
+                provider=result.get("provider", "unknown"),
+                model=getattr(self.llm, "model_name", "unknown"),
+                usage=result.get("usage", {}),
+                latency_ms=result.get("latency_ms", 0),
+            )
+
+            logger.log_event(
+                "AGENT_LLM_OUTPUT",
+                {
+                    "step": step,
+                    "content": content,
+                    "usage": result.get("usage", {}),
+                    "latency_ms": result.get("latency_ms", 0),
+                },
+            )
+
+            self.history.append(
+                {
+                    "step": step,
+                    "llm_output": content,
+                    "usage": result.get("usage", {}),
+                    "latency_ms": result.get("latency_ms", 0),
+                }
+            )
+
+            extracted_final = self._extract_final_answer(content)
+            if extracted_final:
+                final_answer = extracted_final
+                logger.log_event(
+                    "AGENT_FINAL_ANSWER",
+                    {
+                        "step": step,
+                        "answer": final_answer,
+                    },
+                )
+                break
+
+            parsed_action = self._parse_action(content)
+
+            if parsed_action is None:
+                observation = {
+                    "error": "NO_ACTION_PARSED",
+                    "message": (
+                        "The assistant did not provide a valid Action. "
+                        "It must use Action: tool_name({\"key\": \"value\"}) "
+                        "or Final Answer: ..."
+                    ),
+                }
+
+                logger.log_event(
+                    "AGENT_PARSE_ERROR",
+                    {
+                        "step": step,
+                        "content": content,
+                        "observation": observation,
+                    },
+                )
+            else:
+                tool_name, args = parsed_action
+
+                logger.log_event(
+                    "TOOL_CALL",
+                    {
+                        "step": step,
+                        "tool_name": tool_name,
+                        "args": args,
+                    },
+                )
+
+                observation = self._execute_tool(tool_name, args)
+
+                logger.log_event(
+                    "TOOL_RESULT",
+                    {
+                        "step": step,
+                        "tool_name": tool_name,
+                        "observation": observation,
+                    },
+                )
+
+            observation_text = self._to_json_text(observation)
+
+            conversation += (
+                f"\nAssistant:\n{content}\n"
+                f"Observation: {observation_text}\n"
+            )
+
+        if not final_answer:
+            final_answer = (
+                "I could not complete the task within the maximum number of "
+                "reasoning steps. Please try again with a simpler request."
+            )
+
+            logger.log_event(
+                "AGENT_MAX_STEPS_EXCEEDED",
+                {
+                    "max_steps": self.max_steps,
+                    "last_history": self.history[-1] if self.history else None,
+                },
+            )
+
+        logger.log_event(
+            "AGENT_END",
+            {
+                "steps": len(self.history),
+                "final_answer": final_answer,
+            },
+        )
+
+        return final_answer
+
+    def _extract_final_answer(self, content: str) -> Optional[str]:
+        match = re.search(
+            r"Final Answer\s*:\s*(.*)",
+            content,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        if not match:
+            return None
+
+        answer = match.group(1).strip()
+        return answer or None
+
+    def _parse_action(self, content: str) -> Optional[Tuple[str, Dict[str, Any]]]:
+        cleaned = self._strip_markdown_fences(content)
+
+        match = re.search(
+            r"Action\s*:\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\)",
+            cleaned,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+
+        if not match:
+            return None
+
+        tool_name = match.group(1).strip()
+        args_text = match.group(2).strip()
+
+        args_text = re.split(
+            r"\n\s*(Observation|Final Answer)\s*:",
+            args_text,
+            flags=re.IGNORECASE,
+        )[0].strip()
+
+        if not args_text:
+            return tool_name, {}
+
+        try:
+            args = json.loads(args_text)
+        except json.JSONDecodeError:
+            json_object_match = re.search(r"\{.*\}", args_text, flags=re.DOTALL)
+            if not json_object_match:
+                return None
+
+            try:
+                args = json.loads(json_object_match.group(0))
+            except json.JSONDecodeError:
+                return None
+
+        if not isinstance(args, dict):
+            return None
+
+        return tool_name, args
+
+    def _execute_tool(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         for tool in self.tools:
-            if tool['name'] == tool_name:
-                # TODO: Implement dynamic function calling or simple if/else
-                return f"Result of {tool_name}"
-        return f"Tool {tool_name} not found."
+            if tool["name"] == tool_name:
+                func = tool.get("func") or tool.get("function")
+
+                if func is None:
+                    return {
+                        "error": "TOOL_HAS_NO_FUNCTION",
+                        "tool_name": tool_name,
+                    }
+
+                try:
+                    result = func(**args)
+
+                    if isinstance(result, dict):
+                        return result
+
+                    return {
+                        "result": result,
+                    }
+
+                except TypeError as exc:
+                    return {
+                        "error": "INVALID_TOOL_ARGUMENTS",
+                        "tool_name": tool_name,
+                        "args": args,
+                        "details": str(exc),
+                    }
+
+                except Exception as exc:
+                    return {
+                        "error": "TOOL_EXECUTION_ERROR",
+                        "tool_name": tool_name,
+                        "args": args,
+                        "details": str(exc),
+                    }
+
+        return {
+            "error": "TOOL_NOT_FOUND",
+            "tool_name": tool_name,
+            "available_tools": [tool["name"] for tool in self.tools],
+        }
+
+    def _strip_markdown_fences(self, text: str) -> str:
+        text = text.strip()
+        text = re.sub(r"^```(?:json|python|text)?", "", text, flags=re.IGNORECASE).strip()
+        text = re.sub(r"```$", "", text).strip()
+        return text
+
+    def _to_json_text(self, value: Any) -> str:
+        try:
+            return json.dumps(value, ensure_ascii=False)
+        except TypeError:
+            return str(value)
